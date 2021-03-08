@@ -1,31 +1,17 @@
-# Using of pax.express
+# Using of PAX.express
 
-The PAX.express service is used for the delivery of firmware to esp32 paxcounter devices. This is done by using the OTA feature of 
-the paxcounter project. Our fork of the repo can be found [here](https://github.com/paxexpress/ESP32-Paxcounter). The PAX.express cli can be found [here](https://github.com/paxexpress/paxexpress-cli). Both repositories are used in the discussed setup guide later one. Feel free to clone them for use.
+The PAX.express service is used for the delivery of firmware to esp32 paxcounter devices. This is done by using the OTA feature of the [ESP32-paxcounter project](https://github.com/cyberman54/ESP32-Paxcounter). Our fork can be found [here](https://github.com/paxexpress/ESP32-Paxcounter), which is already setup to use PAX.express to deliver firmware updates. The PAX.express cli can be found [here](https://github.com/paxexpress/paxexpress-cli).
 
 ## Setup guide
 ### Tooling 
 
-Please clone the [paxexpress-cli](https://github.com/paxexpress/paxexpress-cli) to your filesystem. We use poetry for python package management so please also intall [poetry](https://python-poetry.org/docs/#installation).
+Please clone the [paxexpress-cli](https://github.com/paxexpress/paxexpress-cli) to your filesystem. 
+For installation informations read the [README.md](https://github.com/paxexpress/paxexpress-cli/blob/master/README.md).
 
-Using poetry change dirctory to the repo's root directory and call:
-```
-poetry install
-```
-
-after this you should get the cli's command options by using
-
-```
-peotry run paxexpress --help
-```
 ### Registration and login
-It's a good idea to switch to the poetry shell now:
+After installation you can use either `./paxexpress` or `paxexpress.exe` depending of your platform. Substitute the command in the following guide accordingly to your enviroment.
 
-```
-peotry shell
-```
-
-Using `auth` module you can use the register command to register to the PAX.express service.
+Using `auth` module of the paxexpress-cli you can use the register command to register to the PAX.express service.
 
 ``` 
 paxexpress auth register
@@ -45,8 +31,7 @@ paxexpress auth logout
 ```
 
 ### Repositories and packages
-PAX.express uses the structure of repositories which contain packages
-which again have different versions.
+PAX.express uses the structure of repositories which contain packages which again have different versions.
 
 At first you should create a repository to store your packages.
 
@@ -56,16 +41,16 @@ paxexpress repository create
 
 You will be asked for a repository and some description.
 
-After setting the name you can use this name to reference the repository in further commands.
+After setting the name you can use this name to reference the repository in further commands e.g.
 
 ``` 
 paxexpress package create -r YourChoosenRepoName
 ```
 
-e.g. This command creates a package relative to your repository.
-Also here your asked for a name and description.
+This command creates a package relative to your repository.
 
-After this steps your read to upload your first firmware.
+
+After this steps your read to prepare the upload of your first firmware.
 
 ## Flashing and OTA
 You will need the platformio tools to proced with this guide. You can get those e.g. by installing them with your package manager of choise. How to work with platformio is out of scope of this guide.
@@ -74,15 +59,20 @@ Lets shift our focus to the firmware repo [here](https://github.com/paxexpress/E
 
 You also have to create a package on paxexpress by using the cli for the specific boardname. E.g commenting in `olimexpoeiso.h` you would have to have the package `olimexpoeiso` on your repository in paxexpress to store the versions for this specific board class.
 
-Also have a look at `platformio` section. Here you can choose the `default_envs` to be `ota` for uploading to PAX.express or `usb` for flashing your device localy.
+Use this cli command and set the name of the package to the boardname you choose:
+``` 
+paxexpress package create -r YourChoosenRepoName
+```
 
-In the first step we us local flashing. Now please make a copy of `src/paxcounter_orig.conf` and rename it to `src/paxcounter.conf`.
+Also have a look at `platformio` section. Here you can choose the `default_envs` to be `ota` for uploading to PAX.express or `usb` for flashing your device localy. In the first step we us local flashing, there for we use the `usb` `default_envs`.
+
+Now please make a copy of `src/paxcounter_orig.conf` and rename it to `src/paxcounter.conf`.
 
 In this file you configure your paxcounter. Please adjust the values accordingly to your wished configuration. Be aware that you will need to receive rcommands at the later part of this guide. E.g. this can be done by using mqtt and a ethernet port.
 
-Now please make a copy of `src/loraconf_sample.h` and rename it to `src/loraconf.h`. Also  make a copy of `src/ota_sample.conf` and rename it to ``src/ota.conf`. In the later file change `BINTRAY_USER` to your user (not your email you using for login!) on PAX.express, `BINTRAY_REPO` to your created Repositorys' name and `BINTRAY_API_TOKEN` to your password.
+Now please make a copy of `src/loraconf_sample.h` and rename it to `src/loraconf.h`. Also  make a copy of `src/ota_sample.conf` and rename it to `src/ota.conf`. In the later file change `BINTRAY_USER` to your user (not your email you using for login!) on PAX.express, `BINTRAY_REPO` to your created Repositorys' name and `BINTRAY_API_TOKEN` to your password.
 
-Also `OTA_WIFI_SSID` and `OTA_WIFI_PASS` needs to be set to a network the OTA will downloaded over. BE AWARE THIS WIFI CREDENTAILS WILL BE UPLOADED TO PAXEXPRESS INSIDE THE FIRMWARE.
+Also `OTA_WIFI_SSID` and `OTA_WIFI_PASS` needs to be set to a network the OTA will downloaded over. BE AWARE THIS WIFI CREDENTAILS WILL BE UPLOADED TO PAXEXPRESS INSIDE THE FIRMWARE AND ARE AVALIBLE PUBLICLY ON THE SERVICE AT THIS POINT.
 
 Now you are ready to flash the firmware on your board by using platformio tools.
 
@@ -97,7 +87,7 @@ When you want to upload a version of the firmware for OTA set the
 pio run -t upload 
 ```
 
-Now when sending a rcommand of `[0x9, 0x9]` (or `CQk=` on a mqtt publish) over your rcommand channel of choice a OTA should be triggered on the device.
+Now the rcommand to trigger OTA can be used: `[0x09 0x09]` via LoRa or `CQk=` via mqtt
 
 When downgrading versions be aware to earse the flash beforehand
 while being on the env `usb` with
